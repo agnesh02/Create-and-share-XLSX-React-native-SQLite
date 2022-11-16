@@ -69,7 +69,9 @@ export default function App() {
         'INSERT INTO USERS (Rno, Fname, Lname, Marks) VALUES (?,?,?,?)',
         [rollNo, firstName, lastName, marks],
         (tx, result) => {
-          console.log(result);
+          if (result.rowsAffected == 1) {
+            console.log('Record has been inserted successfully !!');
+          }
         },
       );
     });
@@ -79,15 +81,19 @@ export default function App() {
     await db.transaction(tx => {
       tx.executeSql('SELECT * from USERS', [], (tx, result) => {
         let length = result.rows.length - 1;
-        console.log(length);
+        let serialNo = 0;
         while (length >= 0) {
-          console.log(result.rows.item(length).FName);
+          serialNo++;
           fetchedData.push({
-            slNo: length,
-            FName: result.rows.item(length).FName,
+            slNo: serialNo,
+            Roll_No: result.rows.item(length).Rno,
+            First_Name: result.rows.item(length).FName,
+            Last_Name: result.rows.item(length).LName,
+            Marks: result.rows.item(length).Marks,
           });
           length--;
         }
+        console.log("Records has been fetched successfully...Saving it as xlsx");
         saveData();
       });
     });
@@ -127,7 +133,15 @@ export default function App() {
           //url: `data:image/png;base64,${res}`,
           //social: Share.Social.EMAIL,
         };
-        Share.open(shareOptionsUrl);
+        Share.open(shareOptionsUrl)
+          .then(() => console.log('success'))
+          .catch(error => {
+            if (!error.message.includes('did not share')) {
+              console.log(error.message);
+              return;
+            }
+            console.log('Verify if the file has been shared successfully');
+          });
       })
       .catch(e => {
         console.log(e.message);
